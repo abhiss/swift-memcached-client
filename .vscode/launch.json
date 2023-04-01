@@ -1,0 +1,40 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug main",
+            "program": "${workspaceFolder:swift-memcached-client}/.build/debug/main",
+            "args": [],
+            "cwd": "${workspaceFolder:swift-memcached-client}",
+            "preLaunchTask": "swift: Build Debug main"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Release main",
+            "program": "${workspaceFolder:swift-memcached-client}/.build/release/main",
+            "args": [],
+            "cwd": "${workspaceFolder:swift-memcached-client}",
+            "preLaunchTask": "swift: Build Release main"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug ClientExample",
+            "program": "${workspaceFolder:swift-memcached-client}/.build/debug/ClientExample",
+            "args": [],
+            "cwd": "${workspaceFolder:swift-memcached-client}",
+            "preLaunchTask": "swift: Build Debug ClientExample"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Release ClientExample",
+            "program": "${workspaceFolder:swift-memcached-client}/.build/release/ClientExample",
+            "args": [],
+            "cwd": "${workspaceFolder:swift-memcached-client}",
+            "preLaunchTask": "swift: Build Release ClientExample"
+        }
+    ]
+}
