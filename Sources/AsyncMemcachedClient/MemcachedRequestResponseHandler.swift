@@ -3,7 +3,7 @@ import NIOCore
 final class MemcachedRequestResponseHandler: ChannelInboundHandler, ChannelOutboundHandler {
     typealias InboundIn = MetaResponse
     typealias OutboundIn = RequestWrapper
-    typealias OutboundOut = ByteBuffer
+    typealias OutboundOut = MetaRequest
 
     private var queue = CircularBuffer<EventLoopPromise<MetaResponse>>()
 

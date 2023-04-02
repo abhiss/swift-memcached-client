@@ -1,7 +1,7 @@
 import Foundation
-import NIO
+import NIOCore
+import NIOPosix
 import NIOExtras
-import NIOConcurrencyHelpers
 
 public struct AsyncMemcachedClient {
     private var eventLoopGroup: MultiThreadedEventLoopGroup
@@ -19,31 +19,47 @@ public struct AsyncMemcachedClient {
                 return channel.pipeline.addHandlers([IdleStateHandler(readTimeout: TimeAmount.seconds(5))])
                     .flatMap {
                         channel.pipeline.addHandlers([
-                            //TODO - custom decoder that handles multiframe responses (like VA)
+                            //TODO - custom ByteToMessageHandler that handles data containing "\r\n" correctly
                             ByteToMessageHandler(LineBasedFrameDecoder()), 
                             MemcachedMetaResponseDecoder(),
-                            // MessageToByteHandler(MemcachedMetaRequestEncoder()),
+                            MessageToByteHandler(MemcachedMetaRequestEncoder()),
                             MemcachedRequestResponseHandler(),
                         ])
                     } 
                 }
-
         let channel = try await bootstrap.connect(host: host, port: port).get()
         self.channel = channel;
         return self
     }
 
-    public func send(command:String) async throws -> MetaResponse {
+    public func execute(_ request: MetaRequest) async throws -> MetaResponse {
         guard let channel = self.channel else { 
             print("channel not set")
             exit(1)
         } 
-        var buffOut = channel.allocator.buffer(capacity: command.count )
-        buffOut.writeString(command)
-        let promise: EventLoopPromise<MetaResponse> = channel.eventLoop.makePromise()
 
-        let request = RequestWrapper(request: buffOut, promise: promise)
+        let promise: EventLoopPromise<MetaResponse> = channel.eventLoop.makePromise()
+        let request = RequestWrapper(request: request, promise: promise)
         channel.writeAndFlush(request, promise: nil)
         return try await request.promise.futureResult.get()
+    }
+
+    public func get(_ key: String) async throws -> MetaResponse {
+        let request = MetaRequest.get(key: key)
+        return try await self.execute(request)
+    }
+
+    public func set(_ key: String, data: ByteBuffer) async throws -> MetaResponse {
+        let request = MetaRequest.set(key: key, value: data)
+        return try await self.execute(request)
+    }
+
+    public func set(_ key: String, dataStr: String) async throws -> MetaResponse {
+        let dataLen = dataStr.lengthOfBytes(using: .utf8)
+        var dataBuf = ByteBufferAllocator().buffer(capacity: dataLen)
+        dataBuf.writeString(dataStr)
+
+        let request = MetaRequest.set(key: key, value: dataBuf)
+        return try await self.execute(request)
     }
 }

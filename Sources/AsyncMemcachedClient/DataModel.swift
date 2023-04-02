@@ -1,8 +1,7 @@
 import NIOCore
 
 struct RequestWrapper {
-    // TODO - let request: MetaRequest
-    let request: ByteBuffer
+    let request: MetaRequest
     let promise: EventLoopPromise<MetaResponse>
 }
 

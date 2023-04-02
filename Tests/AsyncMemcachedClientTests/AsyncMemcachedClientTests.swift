@@ -65,4 +65,42 @@ final class AsyncMemcachedClientTests: XCTestCase {
         XCTAssertNoThrow(actual = try channel.readInbound(as: MetaResponse.self))
         XCTAssertEqual(actual!, .value(inBufferData))
     }
+
+    func testMemcachedMetaRequestEncoderGet() throws {
+        let channel = EmbeddedChannel(handler: MessageToByteHandler(MemcachedMetaRequestEncoder()))
+        defer {
+            let res = try! channel.finish();
+            XCTAssertTrue(res.isClean)
+        }
+        let key = "key1"
+        let input = MetaRequest.get(key: key)
+
+        let expected = "mg \(key) v\r\n"
+        var outBuf = channel.allocator.buffer(capacity: expected.maximumLengthOfBytes(using: .utf8))
+
+        XCTAssertNoThrow(try channel.writeOutbound(input))
+        XCTAssertNoThrow(outBuf = try channel.readOutbound(as: ByteBuffer.self)!)
+        XCTAssertEqual(outBuf.readString(length: outBuf.readableBytes), expected)
+    }
+
+    func testMemcachedMetaRequestEncoderSet() throws {
+        let channel = EmbeddedChannel(handler: MessageToByteHandler(MemcachedMetaRequestEncoder()))
+        defer {
+            let res = try! channel.finish();
+            XCTAssertTrue(res.isClean)
+        }
+        let key = "key1"
+        let data = "We do the right thing, even when it’s not easy."
+        let dataLen = data.lengthOfBytes(using: .utf8);
+        var  dataBuf = channel.allocator.buffer(capacity: dataLen)
+        dataBuf.writeString(data)
+
+        let input = MetaRequest.set(key:key, value: dataBuf)
+        let expected = "ms \(key) \(dataLen)\r\n\(data)\r\n"
+        var outBuf = channel.allocator.buffer(capacity: expected.maximumLengthOfBytes(using: .utf8))
+
+        XCTAssertNoThrow(try channel.writeOutbound(input))
+        XCTAssertNoThrow(outBuf = try channel.readOutbound(as: ByteBuffer.self)!)
+        XCTAssertEqual(outBuf.readString(length: outBuf.readableBytes), expected)
+    }
 }

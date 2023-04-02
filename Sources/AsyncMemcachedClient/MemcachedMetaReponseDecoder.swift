@@ -1,5 +1,6 @@
 import NIOCore
 
+// Not a ByteToMessageDecoder because it expects "frames" separated by "\r\n".
 final class MemcachedMetaResponseDecoder: ChannelInboundHandler, Sendable {
     typealias InboundIn = ByteBuffer
     typealias InboundOut = MetaResponse

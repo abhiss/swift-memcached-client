@@ -1,5 +1,6 @@
 import AsyncMemcachedClient
 import NIOPosix
+import NIOCore
 
 let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
 defer {
@@ -9,15 +10,25 @@ defer {
 var client = AsyncMemcachedClient(eventLoopGroup: group)
 let connection = try await client.connect(host: "::1", port: 11211, group: group)
 
-let setResponse = try! await connection.send(command: "ms fast 2\r\nhi\r\n")
-let getResponseNoValue = try! await connection.send(command: "mg fast\r\n")
-let getResponseMiss = try! await connection.send(command: "mg slow\r\n")
-let getResponseWithValue = try! await connection.send(command: "mg fast v\r\n")
+/// MARK: - using connection.execute with custom MetaRequest
+var writeBuf = ByteBufferAllocator().buffer(capacity: 2)
+writeBuf.writeString("hi")
+let setRequest = MetaRequest.set(key: "greeting", value: writeBuf)
+let setResponse = try await connection.execute(setRequest)
+assert(setResponse == .success)
 
-print("setResponse: \(setResponse)")
-print("getResponseNoValue: \(getResponseNoValue)")
-print("getResponseMiss: \(getResponseMiss)")
-if case .value(value: var inBuf) = getResponseWithValue {
-    let stringResponse = inBuf.readString(length: inBuf.readableBytes)!
-    print("getResponseWithValue: \(stringResponse)")
-}
+let getRequestMiss = MetaRequest.get(key:"not_greeting")
+let getResponseMiss = try await connection.execute(getRequestMiss)
+assert(getResponseMiss == .miss)
+
+/// MARK: - using connection.get/set helper functions
+let setResponseName = try await connection.set("name", dataStr: "Rosa")
+assert(setResponseName == .success)
+let getResonseName = try await connection.get("name")
+
+// verify returned value
+if case .value(value: var readBuf) = getResonseName {
+    let stringResponse = readBuf.readString(length: readBuf.readableBytes)!
+    assert(stringResponse == "Rosa")
+    print("response: \(stringResponse)")
+} else { assertionFailure("Expected to recieve value") }
