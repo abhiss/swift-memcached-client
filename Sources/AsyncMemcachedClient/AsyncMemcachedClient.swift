@@ -3,7 +3,7 @@ import NIOCore
 import NIOPosix
 import NIOExtras
 
-public struct AsyncMemcachedClient {
+public struct MemcachedClient {
     private var eventLoopGroup: MultiThreadedEventLoopGroup
     private var channel: Channel?
 
@@ -12,8 +12,8 @@ public struct AsyncMemcachedClient {
         self.channel = nil
     }
 
-    public mutating func connect(host: String, port: Int, group: EventLoopGroup) async throws -> Self {
-        let bootstrap = ClientBootstrap(group: group)
+    public mutating func connect(host: String, port: Int) async throws -> Self {
+        let bootstrap = ClientBootstrap(group: self.eventLoopGroup)
             .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
             .channelInitializer { channel in
                 return channel.pipeline.addHandlers([IdleStateHandler(readTimeout: TimeAmount.seconds(5))])

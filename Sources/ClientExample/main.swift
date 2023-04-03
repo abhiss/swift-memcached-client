@@ -7,12 +7,13 @@ defer {
     try! group.syncShutdownGracefully()
 }
 
-var client = AsyncMemcachedClient(eventLoopGroup: group)
-let connection = try await client.connect(host: "::1", port: 11211, group: group)
+var client = MemcachedClient(eventLoopGroup: group)
+let connection = try await client.connect(host: "::1", port: 11211)
 
-/// MARK: - using connection.execute with custom MetaRequest
 var writeBuf = ByteBufferAllocator().buffer(capacity: 2)
 writeBuf.writeString("hi")
+
+/// MARK: - using connection.execute with custom MetaRequest
 let setRequest = MetaRequest.set(key: "greeting", value: writeBuf)
 let setResponse = try await connection.execute(setRequest)
 assert(setResponse == .success)
@@ -31,4 +32,4 @@ if case .value(value: var readBuf) = getResonseName {
     let stringResponse = readBuf.readString(length: readBuf.readableBytes)!
     assert(stringResponse == "Rosa")
     print("response: \(stringResponse)")
-} else { assertionFailure("Expected to recieve value") }
+} else { assertionFailure("Expected to recieve value") } 
