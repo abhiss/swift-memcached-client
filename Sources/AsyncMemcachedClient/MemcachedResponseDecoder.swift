@@ -1,9 +1,9 @@
 import NIOCore
 
 // Not a ByteToMessageDecoder because it expects "frames" separated by "\r\n".
-final class MemcachedMetaResponseDecoder: ChannelInboundHandler, Sendable {
+final class MemcachedResponseDecoder: ChannelInboundHandler, Sendable {
     typealias InboundIn = ByteBuffer
-    typealias InboundOut = MetaResponse
+    typealias InboundOut = MemcachedResponse
 
     enum Expect {
         case newFrame
@@ -24,31 +24,31 @@ final class MemcachedMetaResponseDecoder: ChannelInboundHandler, Sendable {
                     // parse data length
                     let dataLenStr = remainder.split(separator: " ", maxSplits: 1).first
                     guard let dataLen = Int(dataLenStr ?? "") else {
-                        context.fireErrorCaught(MemcachedMetaResponseDecoderError.protocolError("VA contained invalid or no data length"))
+                        context.fireErrorCaught(MemcachedResponseDecoderError.protocolError("VA contained invalid or no data length"))
                         return;
                     }
                     self.waitingForFrame = .vaDataFrame(dataLen: dataLen)
                 case ("HD"):
-                    let parsedMessage = MetaResponse.success
+                    let parsedMessage = MemcachedResponse.success
                     context.fireChannelRead(self.wrapInboundOut(parsedMessage))
                 case ("EN"):
-                    let parsedMessage = MetaResponse.miss
+                    let parsedMessage = MemcachedResponse.miss
                     context.fireChannelRead(self.wrapInboundOut(parsedMessage))
                 default:
                     context.fireChannelRead(self.wrapInboundOut(.other(responseCode+remainder)))
                 }
             } else {
-                context.fireErrorCaught(MemcachedMetaResponseDecoderError.protocolError("No return code"))
+                context.fireErrorCaught(MemcachedResponseDecoderError.protocolError("No return code"))
             }
 
         case .vaDataFrame: //frame following VA response code
             self.waitingForFrame = .newFrame // done handling multi-frame VA response
-            let parsedMessage = MetaResponse.value(response)
+            let parsedMessage = MemcachedResponse.value(response)
             context.fireChannelRead(self.wrapInboundOut(parsedMessage))
         }
     }
 }
 
-enum MemcachedMetaResponseDecoderError: Error {
+enum MemcachedResponseDecoderError: Error {
     case protocolError(String?)
 }

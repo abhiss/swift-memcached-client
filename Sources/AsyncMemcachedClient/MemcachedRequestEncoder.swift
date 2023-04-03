@@ -1,10 +1,10 @@
 import NIOCore
 import Foundation
 
-final class MemcachedMetaRequestEncoder: MessageToByteEncoder, Sendable {
-    typealias OutboundIn = MetaRequest
+struct MemcachedRequestEncoder: MessageToByteEncoder, Sendable {
+    typealias OutboundIn = MemcachedRequest
 
-    func encode(data: MetaRequest, out: inout ByteBuffer) throws {
+    func encode(data: MemcachedRequest, out: inout ByteBuffer) throws {
         out.reserveCapacity(20)
         switch data {
         case .get(key: let key):

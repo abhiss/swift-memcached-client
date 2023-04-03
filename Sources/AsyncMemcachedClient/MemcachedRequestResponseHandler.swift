@@ -1,11 +1,11 @@
 import NIOCore
 
 final class MemcachedRequestResponseHandler: ChannelInboundHandler, ChannelOutboundHandler {
-    typealias InboundIn = MetaResponse
+    typealias InboundIn = MemcachedResponse
     typealias OutboundIn = RequestWrapper
-    typealias OutboundOut = MetaRequest
+    typealias OutboundOut = MemcachedRequest
 
-    private var queue = CircularBuffer<EventLoopPromise<MetaResponse>>()
+    private var queue = CircularBuffer<EventLoopPromise<MemcachedResponse>>()
 
     // outbound
     public func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
