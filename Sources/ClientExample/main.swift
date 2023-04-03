@@ -14,12 +14,10 @@ writeBuf.writeString("hi")
 
 /// MARK: - using connection.get/set helper functions
 let setResponseName = try await connection.set("name", dataStr: "Rosa")
-assert(setResponseName == .success)
-let getResonseName = try await connection.get("name")
+assert(setResponseName == true)
 
-// verify returned value
-if case .value(value: var readBuf) = getResonseName {
-    let stringResponse = readBuf.readString(length: readBuf.readableBytes)!
-    assert(stringResponse == "Rosa")
-    print("response: \(stringResponse)")
-} else { assertionFailure("Expected to recieve value") } 
+var readBuf = try await connection.get("name")!
+let stringResponse = readBuf.readString(length: readBuf.readableBytes)!
+assert(stringResponse == "Rosa")
+print(stringResponse)
+

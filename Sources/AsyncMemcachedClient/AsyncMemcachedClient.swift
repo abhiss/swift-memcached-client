@@ -32,7 +32,7 @@ public struct MemcachedConnection {
         self.channel = channel;
     }
 
-    public func execute(_ request: MemcachedRequest) async throws -> MemcachedResponse {
+    func execute(_ request: MemcachedRequest) async throws -> MemcachedResponse {
         guard let channel = self.channel else { 
             print("channel not set")
             exit(1)
@@ -44,22 +44,28 @@ public struct MemcachedConnection {
         return try await request.promise.futureResult.get()
     }
 
-    public func get(_ key: String) async throws -> MemcachedResponse {
+    public func get(_ key: String) async throws -> ByteBuffer? {
         let request = MemcachedRequest.get(key: key)
-        return try await self.execute(request)
+        let response = try await self.execute(request)
+        if case .value(value: let readBuf) = response {
+            return readBuf
+        }
+        else {
+            return nil
+        }
     }
 
-    public func set(_ key: String, data: ByteBuffer) async throws -> MemcachedResponse {
+    public func set(_ key: String, data: ByteBuffer) async throws -> Bool{
         let request = MemcachedRequest.set(key: key, value: data)
-        return try await self.execute(request)
+        return try await self.execute(request) == .success
     }
 
-    public func set(_ key: String, dataStr: String) async throws -> MemcachedResponse {
+    public func set(_ key: String, dataStr: String) async throws -> Bool {
         let dataLen = dataStr.lengthOfBytes(using: .utf8)
         var dataBuf = ByteBufferAllocator().buffer(capacity: dataLen)
         dataBuf.writeString(dataStr)
 
         let request = MemcachedRequest.set(key: key, value: dataBuf)
-        return try await self.execute(request)
+        return try await self.execute(request) == .success
     }
 }
